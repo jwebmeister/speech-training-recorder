@@ -33,8 +33,8 @@ class Recorder(QObject):
         self.window.setProperty('saveDir', self.save_dir)
         self.scriptModel = scriptModel
         self.window.setProperty('promptsName', os.path.splitext(os.path.basename(self.prompts_filename))[0])
-        for script in self.get_scripts_from_file(self.prompts_count, self.prompts_filename, self.ordered, split_len=self.prompt_len_soft_max):
-            self.window.appendScript({'script': script, 'filename': ''})
+        for (script_id, script) in self.get_scripts_from_file(self.prompts_count, self.prompts_filename, self.ordered, split_len=self.prompt_len_soft_max):
+            self.window.appendScript({'script': script, 'script_id': script_id, 'filename': ''})
 
     @Slot(bool)
     def toggleRecording(self, recording):
@@ -56,8 +56,9 @@ class Recorder(QObject):
         self.window.setProperty('scriptFilename', filename)
         self.audio.write_wav(filename, data)
         scriptText = self.window.property('scriptText')
+        scriptId = self.window.property('scriptId')
         with open(os.path.join(self.window.property('saveDir'), "recorder.tsv"), "a") as xsvfile:
-            xsvfile.write('\t'.join([filename, '0', self.window.property('promptsName'), '', self.sanitize_script(scriptText)]) + '\n')
+            xsvfile.write('\t'.join([filename, '0', self.window.property('promptsName'), scriptId, self.sanitize_script(scriptText)]) + '\n')
         logging.debug("wrote %s to %s", len(data), filename)
 
     @Slot(str)
@@ -99,12 +100,12 @@ class Recorder(QObject):
         def filter(script):
             # match = re.fullmatch(r'\w+ "(.*)"', script)
             patterns = [
-                r'^\w+ "(.*)"$',  # arctic
-                r'^(.*) \(s.\d+\)$',  # timit
+                r'^(\w+) "(.*)"$',  # tacspeak_readyornot
             ]
             for pat in patterns:
-                script = re.sub(pat, r'\1', script, count=1)
-            return script
+                script_id = re.sub(pat, r'\1', script, count=1)
+                script = re.sub(pat, r'\2', script, count=1)
+            return (script_id, script)
 
         with open(filename, 'r') as file:
             scripts = [line.strip() for line in file if not line.startswith(';')]

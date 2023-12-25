@@ -14,6 +14,7 @@ Window {
     property bool recording: false
     property string promptsName: ''
     property string scriptText: ''
+    property string scriptId: ''
     property string scriptFilename: ''
     property string saveDir: '.'
 
@@ -60,17 +61,22 @@ Window {
 
                 onCurrentItemChanged: {
                     scriptText = model.get(currentIndex).script;
+                    scriptId = model.get(currentIndex).script_id;
                     scriptFilename = model.get(currentIndex).filename;
-                    console.log('selected: "' + scriptText + '", ' + scriptFilename);
+                    console.log('selected: "' + scriptText + '", ' + scriptId + '", ' + scriptFilename);
                 }
 
                 delegate: Item {
                     width: parent.width - 20
-                    height: 30
+                    height: 44
                     Column {
                         Text {
                             text: script
                             font.pointSize: 10
+                        }
+                        Text {
+                            text: script_id
+                            font.pointSize: 8
                         }
                         Text {
                             text: 'Filename: ' + filename
