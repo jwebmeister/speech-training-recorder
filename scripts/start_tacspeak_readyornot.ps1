@@ -1,1 +1,1 @@
-python .\recorder.py -p .\prompts\tacspeak_readyornot.txt -d .\retain\ -c 100 -o
+python .\recorder.py -p .\prompts\tacspeak_readyornot.txt -d .\retain\ -c 100 -n

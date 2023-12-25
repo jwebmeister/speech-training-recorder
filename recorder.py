@@ -16,7 +16,7 @@ import audio
 class Recorder(QObject):
     """docstring for Recorder"""
 
-    def __init__(self, save_dir, prompts_filename, ordered=False, prompts_count=100, prompt_len_soft_max=None):
+    def __init__(self, save_dir, prompts_filename, ordered=False, new_only=False, prompts_count=100, prompt_len_soft_max=None):
         super(Recorder, self).__init__()
         if not os.path.isdir(save_dir): raise Exception("save_dir '%s' is not a directory" % save_dir)
         self.save_dir = save_dir
@@ -26,6 +26,19 @@ class Recorder(QObject):
         self.prompt_len_soft_max = prompt_len_soft_max
         self.ordered = ordered
         self.audio = audio.Audio()
+        self.new_only = new_only
+
+    def list_recorded_ids(self, save_dir):
+        recorded_ids = []
+        recorder_file_path = os.path.join(save_dir, "recorder.tsv")
+        if not os.path.isfile(recorder_file_path): 
+            return recorded_ids
+        with open(recorder_file_path, mode='r') as recorder_file:
+            for line in recorder_file:
+                line_splitted = line.split('\t')
+                if len(line_splitted) >= 3:
+                    recorded_ids.append(line_splitted[3])
+        return recorded_ids
 
     @Slot(QObject)
     def init(self, scriptModel):
@@ -33,7 +46,7 @@ class Recorder(QObject):
         self.window.setProperty('saveDir', self.save_dir)
         self.scriptModel = scriptModel
         self.window.setProperty('promptsName', os.path.splitext(os.path.basename(self.prompts_filename))[0])
-        for (script_id, script) in self.get_scripts_from_file(self.prompts_count, self.prompts_filename, self.ordered, split_len=self.prompt_len_soft_max):
+        for (script_id, script) in self.get_scripts_from_file(self.prompts_count, self.prompts_filename, self.ordered, split_len=self.prompt_len_soft_max, new_only=self.new_only):
             self.window.appendScript({'script': script, 'script_id': script_id, 'filename': ''})
 
     @Slot(bool)
@@ -96,8 +109,8 @@ class Recorder(QObject):
             self.audio.buffer_queue.get_nowait()
         return size
 
-    def get_scripts_from_file(self, n, filename, ordered=False, split_len=None):
-        def filter(script):
+    def get_scripts_from_file(self, n, filename, ordered=False, split_len=None, new_only=False):
+        def script_filter(script):
             # match = re.fullmatch(r'\w+ "(.*)"', script)
             patterns = [
                 r'^(\w+) "(.*)"$',  # tacspeak_readyornot
@@ -109,12 +122,22 @@ class Recorder(QObject):
 
         with open(filename, 'r') as file:
             scripts = [line.strip() for line in file if not line.startswith(';')]
+        if new_only:
+            recorded_ids = self.list_recorded_ids(self.save_dir)
+            def id_filter(s):
+                for r_id in recorded_ids:
+                    if r_id in s:
+                        return False
+                return True
+            filtered_scripts = list(filter(id_filter, scripts))
+            scripts = filtered_scripts
+
         if n is None: n = len(scripts)
         if not ordered:
             # random.shuffle(scripts)
             scripts = [random.choice(scripts) for _ in range(n)]
         scripts = scripts[:n]
-        scripts = [filter(script) for script in scripts]
+        scripts = [script_filter(script) for script in scripts]
         if split_len is not None:
             scripts = [self.split_script(script, split_len) for script in scripts]
             scripts = sum(scripts, [])
@@ -157,6 +180,7 @@ def main():
     parser.add_argument('-c', '--prompts_count', type=int, default=100, help='number of prompts to select and display (default: %(default)s)')
     parser.add_argument('-l', '--prompt_len_soft_max', type=int)
     parser.add_argument('-o', '--ordered', action='store_true', default=False, help='present prompts in order, as opposed to random (default: %(default)s)')
+    parser.add_argument('-n', '--new_only', action='store_true', default=False, help='present only prompts that have not previously been recorded (default: %(default)s)')
     args = parser.parse_args()
     assert args.prompts_filename
 
@@ -165,7 +189,7 @@ def main():
     engine = QQmlApplicationEngine()
     engine.addImportPath(current_path)
     kwargs = { k: v for k, v in vars(args).items() if v is not None and k in 'prompts_count prompt_len_soft_max'.split() }
-    recorder = Recorder(args.save_dir, args.prompts_filename, args.ordered, **kwargs)
+    recorder = Recorder(args.save_dir, args.prompts_filename, args.ordered, args.new_only, **kwargs)
     engine.rootContext().setContextProperty('recorder', recorder)
     engine.load(qml_file)
     recorder.window = engine.rootObjects()[0]
