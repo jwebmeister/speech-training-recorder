@@ -1,8 +1,8 @@
-import QtQuick 2.12
-import QtQuick.Window 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.3
-import QtMultimedia 5.8
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtMultimedia
 
 Window {
     id: root
@@ -68,7 +68,7 @@ Window {
 
                 delegate: Item {
                     width: parent.width - 20
-                    height: 44
+                    height: 48
                     Column {
                         Text {
                             text: script
@@ -135,14 +135,14 @@ Window {
                 text: "Play"
                 enabled: scriptFilename
                 highlighted: playFile.playbackState == playFile.PlayingState
-                // onClicked: recorder.playFile(scriptFilename)
                 onClicked: {
                     playFile.source = scriptFilename
                     playFile.play()
                 }
-                Audio {
+                MediaPlayer {
                     id: playFile
                     source: ''
+                    audioOutput: AudioOutput {}
                 }
             }
 
@@ -151,7 +151,11 @@ Window {
                 font.pointSize: 14
                 text: "Delete"
                 enabled: scriptFilename
-                onClicked: recorder.deleteFile(scriptFilename)
+                onClicked: {
+                    playFile.stop()
+                    playFile.source = ''
+                    recorder.deleteFile(scriptFilename)
+                }
             }
 
             Button {

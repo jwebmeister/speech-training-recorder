@@ -7,9 +7,9 @@ try:
 except Exception as e:
     logging.warning("sound output only supported on Windows")
 
-from PySide2.QtGui import QGuiApplication, QFontDatabase
-from PySide2.QtQml import QQmlApplicationEngine, qmlRegisterType
-from PySide2.QtCore import Qt, QUrl, QObject, Property, Signal, Slot
+from PySide6.QtGui import QGuiApplication, QFontDatabase
+from PySide6.QtQml import QQmlApplicationEngine, qmlRegisterType
+from PySide6.QtCore import Qt, QUrl, QObject, Property, Signal, Slot
 
 import audio
 
@@ -194,7 +194,7 @@ def main():
     engine.load(qml_file)
     recorder.window = engine.rootObjects()[0]
 
-    res = app.exec_()
+    res = app.exec()
     sys.exit(res)
 
 if __name__ == '__main__':
