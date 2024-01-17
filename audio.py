@@ -13,7 +13,7 @@ class Audio(object):
     """Streams raw audio from microphone. Data is received in a separate thread, and stored in a buffer, to be read from."""
 
     FORMAT = pyaudio.paInt16
-    RATE = 16000
+    RATE = 48000
     CHANNELS = 1
     BLOCKS_PER_SECOND = 50
 
