@@ -116,7 +116,7 @@ Window {
             Layout.preferredHeight: 60
             font.pointSize: 16
             highlighted: recording
-            text: recording ? "Stop" : "Start"
+            text: recording ? "Stop Recording (r)" : "Start Recording (r)"
             onClicked: {
                 recording = !recording;
                 if (recording) {
@@ -126,13 +126,25 @@ Window {
                     gotoNextScript();
                 }
             }
+            Shortcut {
+                sequence: "r"
+                onActivated: {
+                    recording = !recording;
+                    if (recording) {
+                        recorder.startRecording();
+                    } else {
+                        recorder.finishRecording();
+                        gotoNextScript();
+                    }
+                }
+            }
         }
 
         RowLayout {
             Button {
                 Layout.fillWidth: true
                 font.pointSize: 14
-                text: "Play"
+                text: "Play (p)"
                 enabled: scriptFilename
                 highlighted: playFile.playbackState == playFile.PlayingState
                 onClicked: {
@@ -144,29 +156,56 @@ Window {
                     source: ''
                     audioOutput: AudioOutput {}
                 }
+                Shortcut {
+                    sequence: "p"
+                    onActivated: {
+                        playFile.source = scriptFilename
+                        playFile.play()
+                    }
+                }
             }
+
+            
 
             Button {
                 Layout.fillWidth: true
                 font.pointSize: 14
-                text: "Delete"
+                text: "Delete (d)"
                 enabled: scriptFilename
                 onClicked: {
                     playFile.stop()
                     playFile.source = ''
                     recorder.deleteFile(scriptFilename)
                 }
+                Shortcut {
+                    sequence: "d"
+                    onActivated: {
+                        playFile.stop()
+                        playFile.source = ''
+                        recorder.deleteFile(scriptFilename)
+                    }
+                }
             }
 
             Button {
                 Layout.fillWidth: true
                 font.pointSize: 14
-                text: recording ? "Cancel" : "Next"
+                text: recording ? "Cancel (n)" : "Next (n)"
                 onClicked: {
                     if (recording) {
                         recording = !recording;
                     } else {
                         gotoNextScript()
+                    }
+                }
+                Shortcut {
+                    sequence: "n"
+                    onActivated: {
+                        if (recording) {
+                            recording = !recording;
+                        } else {
+                            gotoNextScript()
+                        }
                     }
                 }
             }
