@@ -65,11 +65,11 @@ class Recorder(QObject):
         data = self.read_audio(drop_last=3)
         if self.window.property('scriptFilename'):
             self.deleteFile(self.window.property('scriptFilename'))
-        filename = os.path.normpath(os.path.join(self.window.property('saveDir'), "recorder_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f") + ".wav"))
-        self.window.setProperty('scriptFilename', filename)
-        self.audio.write_wav(filename, data)
         scriptText = self.window.property('scriptText')
         scriptId = self.window.property('scriptId')
+        filename = os.path.normpath(os.path.join(self.window.property('saveDir'), "recorder_" + re.sub('\\s','_',scriptId) + '_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".wav"))
+        self.window.setProperty('scriptFilename', filename)
+        self.audio.write_wav(filename, data)
         with open(os.path.join(self.window.property('saveDir'), "recorder.tsv"), "a") as xsvfile:
             xsvfile.write('\t'.join([filename, '0', self.window.property('promptsName'), scriptId, self.sanitize_script(scriptText)]) + '\n')
         logging.debug("wrote %s to %s", len(data), filename)
