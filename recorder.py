@@ -62,7 +62,7 @@ class Recorder(QObject):
     @Slot()
     def finishRecording(self):
         self.audio.stream.stop_stream()
-        data = self.read_audio(drop_last=3)
+        data = self.read_audio(drop_last=3, drop_first=3)
         if self.window.property('scriptFilename'):
             self.deleteFile(self.window.property('scriptFilename'))
         scriptText = self.window.property('scriptText')
@@ -91,7 +91,7 @@ class Recorder(QObject):
         os.replace(xsvfile_out_path, xsvfile_in_path)
         self.window.setProperty('scriptFilename', '')
 
-    def read_audio(self, drop_last=None):
+    def read_audio(self, drop_last=None, drop_first=None):
         blocks = []
         while not self.audio.buffer_queue.empty():
             block = self.audio.buffer_queue.get_nowait()
@@ -101,6 +101,8 @@ class Recorder(QObject):
         # logging.debug('read total %s', len(b''.join(blocks)))
         if drop_last:
             blocks = blocks[:-drop_last]
+        if drop_first:
+            blocks = blocks[drop_first:]
         return b''.join(blocks)
 
     def flush(self):
